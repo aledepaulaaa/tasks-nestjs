@@ -1,62 +1,70 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
-"vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "style": {
-        "useImportType": "off",
-        "noNonNullAssertion": "off"
-      },
-      "suspicious": {
-        "noExplicitAny": "warn"
-      },
-      "correctness": {
-        "noUnusedImports": "error"
-      }
-    }
-  },
-  "formatter": {
-    "enabled": true,
-    "formatWithErrors": false,
-    "indentStyle": "space",
-    "indentWidth": 4,
-    "lineWidth": 100
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "trailingCommas": "all",
-      "semicolons": "asNeeded"
+    "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+    "assist": {
+        "enabled": false,
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
     },
-    "parser": {
-      "unsafeParameterDecoratorsEnabled": true
-    }
-  },
-  "overrides": [
-    {
-      "includes": ["**/*.spec.ts", "**/*.test.ts", "**/test/**"],
-      "javascript": {
-        "parser": {
-          "unsafeParameterDecoratorsEnabled": true
-        }
-      },
-      "linter": {
+    "linter": {
+        "enabled": true,
         "rules": {
-          "suspicious": {
-            "noExplicitAny": "off"
-          }
+            "recommended": true,
+            "style": {
+                "useImportType": "off",
+                "noNonNullAssertion": "off"
+            },
+            "suspicious": {
+                "noExplicitAny": "warn"
+            },
+            "correctness": {
+                "noUnusedFunctionParameters": "error"
+            }
         }
-      }
+    },
+    "formatter": {
+        "enabled": true,
+        "formatWithErrors": false,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 100
+    },
+    "javascript": {
+        "formatter": {
+            "quoteStyle": "single",
+            "trailingCommas": "all",
+            "semicolons": "asNeeded"
+        },
+        "parser": {
+            "unsafeParameterDecoratorsEnabled": true
+        }
+    },
+    "overrides": [
+        {
+            "includes": [
+                "**/*.spec.ts",
+                "**/*.test.ts",
+                "**/test/**"
+            ],
+            "javascript": {
+                "parser": {
+                    "unsafeParameterDecoratorsEnabled": true
+                }
+            },
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noExplicitAny": "off"
+                    }
+                }
+            }
+        }
+    ],
+    "files": {
+        "includes": [
+            "src/**/*.ts"
+        ]
     }
-  ],
-  "files": {
-    "includes": ["src/**/*.ts"]
-  }
 }

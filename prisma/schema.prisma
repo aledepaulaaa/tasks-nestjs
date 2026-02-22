@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String                @id @default(uuid())
+  name            String
+  email           String                @unique
+  password        String
+  avatar          String?
+  role            Role                  @default(USER)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  createdProjects Project[]             @relation("UserProjects")
+  tasksAssigned   Task[]                @relation("AssignedTasks")
+  collaborations  ProjectCollaborator[]
+  comments        Comment[]
+}
+
+model Project {
+  id            String                @id @default(uuid())
+  name          String
+  description   String?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  createdById   String
+  createdBy     User                  @relation("UserProjects", fields: [createdById], references: [id])
+  collaborators ProjectCollaborator[]
+  tasks         Task[]
+}
+
+model ProjectCollaborator {
+  id        String           @id @default(ulid())
+  role      CollaboratorRole @default(EDITOR)
+  userId    String
+  projectId String
+  createdAt DateTime         @default(now())
+  project   Project          @relation(fields: [projectId], references: [id])
+  user      User             @relation(fields: [userId], references: [id])
+
+  @@unique([userId, projectId])
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  projectId   String
+  assigneeId  String?
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee    User?        @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  comments    Comment[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  authorId  String
+  taskId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id])
+  task      Task     @relation(fields: [taskId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum CollaboratorRole {
+  VIEWER
+  EDITOR
+  OWNER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}

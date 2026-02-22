@@ -1,0 +1,83 @@
+import { Writable } from 'node:stream'
+import { Test, TestingModule } from '@nestjs/testing'
+import { CloudinaryService } from './cloudinary.service'
+
+jest.mock('cloudinary', () => ({
+    v2: {
+        uploader: {
+            upload_stream: jest.fn(),
+        },
+        url: jest.fn(),
+        config: jest.fn(),
+    },
+}))
+
+describe('CloudinaryService', () => {
+    let service: CloudinaryService
+    const cloudinary: any = require('cloudinary').v2
+
+    beforeEach(async () => {
+        jest.clearAllMocks()
+
+        const module: TestingModule = await Test.createTestingModule({
+            providers: [CloudinaryService],
+        }).compile()
+
+        service = module.get<CloudinaryService>(CloudinaryService)
+    })
+
+    it('deve ser definido e configurado no Cloudinary.', () => {
+        expect(service).toBeDefined()
+        expect(cloudinary.config).toHaveBeenCalled()
+    })
+
+    it('O upload deve ser concluído com sucesso, exibindo a URL.', async () => {
+        const fakeFile = { buffer: Buffer.from('test') } as Express.Multer.File
+
+        cloudinary.url.mockReturnValue('http://example.com/avatar.jpg')
+
+        ;(cloudinary.uploader.upload_stream as jest.Mock).mockImplementation((_opts, cb) => {
+            const stream = new Writable({
+                write(_chunk, _enc, callback) {
+                    callback()
+                },
+            })
+
+            process.nextTick(() => cb(null, { public_id: 'test-public-id' }))
+
+            return stream
+        })
+
+        const res = await service.upload(fakeFile, 'test-name')
+
+        expect(res).toEqual({ url: 'http://example.com/avatar.jpg' })
+
+        expect(cloudinary.uploader.upload_stream).toHaveBeenCalledWith(
+            expect.objectContaining({ public_id: 'test-name', folder: 'avatars' }),
+            expect.any(Function),
+        )
+
+        expect(cloudinary.url).toHaveBeenCalledWith(
+            'test-public-id',
+            expect.objectContaining({ fetch_format: 'auto', quality: 'auto' }),
+        )
+    })
+
+    it('O upload deve ser rejeitado quando o Cloudinary retornar um erro.', async () => {
+        const fakeFile = { buffer: Buffer.from('test') } as Express.Multer.File
+
+        ;(cloudinary.uploader.upload_stream as jest.Mock).mockImplementation((_opts, cb) => {
+            const stream = new Writable({
+                write(_chunk, _enc, callback) {
+                    callback()
+                },
+            })
+
+            process.nextTick(() => cb(new Error('upload failed'), null))
+
+            return stream
+        })
+
+        await expect(service.upload(fakeFile, 'test-name')).rejects.toThrow('upload failed')
+    })
+})

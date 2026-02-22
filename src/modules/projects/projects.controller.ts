@@ -1,28 +1,49 @@
 import { ProjectsService } from './projects.service'
-import { ProjectListItemDTO, ProjectRequestDTO } from './projects.dto'
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Put } from '@nestjs/common'
-import { ApiResponse } from '@nestjs/swagger'
+import { ProjectFullDTO, ProjectListItemDTO, type ProjectRequestDTO } from './projects.dto'
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Param,
+    ParseUUIDPipe,
+    Post,
+    Put,
+    Query,
+    UseGuards,
+    UseInterceptors,
+} from '@nestjs/common'
+import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger'
+import { ValidateResourcesIds } from '../../common/decorators/validate-resources-ids.decorator'
+import { ValidateResourcesIdsInterceptor } from '../../common/interceptors/validate-resources-ids.interceptor'
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard'
+import { QueryPaginationDTO } from '../../common/dtos/query-pagination.dto'
+import { ApiPaginatedResponse } from '../../common/swagger/api-paginated-response'
 
 @Controller({
     version: '1',
-    path: 'projects'
+    path: 'projects',
 })
+@UseInterceptors(ValidateResourcesIdsInterceptor)
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth('jwt')
 export class ProjectsController {
-    constructor(private readonly projectsService: ProjectsService) { }
+    constructor(private readonly projectsService: ProjectsService) {}
 
     @Get()
-    @ApiResponse({
-        type: [ProjectListItemDTO]
-    })
-    findAll() {
-        return this.projectsService.findAll()
+    @ApiPaginatedResponse(ProjectListItemDTO)
+    findAll(@Query() query?: QueryPaginationDTO) {
+        return this.projectsService.findAll(query)
     }
 
-    @Get(':id')
+    @Get(':projectId')
     @ApiResponse({
-        type: ProjectListItemDTO
+        type: ProjectFullDTO,
     })
-    findOne(@Param('id', ParseUUIDPipe) id: string) {
+    @ValidateResourcesIds()
+    async findOne(@Param('projectId', ParseUUIDPipe) id: string) {
         return this.projectsService.findbyId(id)
     }
 
@@ -31,17 +52,19 @@ export class ProjectsController {
         return this.projectsService.create(data)
     }
 
-    @Put(':id')
+    @Put(':projectId')
     @ApiResponse({
-        type: ProjectListItemDTO
+        type: ProjectListItemDTO,
     })
-    update(@Param('id', ParseUUIDPipe) id: string, @Body() data: ProjectRequestDTO) {
+    @ValidateResourcesIds()
+    async update(@Param('projectId', ParseUUIDPipe) id: string, @Body() data: ProjectRequestDTO) {
         return this.projectsService.update(id, data)
     }
 
-    @Delete(':id')
+    @Delete(':projectId')
     @HttpCode(HttpStatus.NO_CONTENT)
-    remove(@Param('id', ParseUUIDPipe) id: string) {
+    @ValidateResourcesIds()
+    async remove(@Param('projectId', ParseUUIDPipe) id: string) {
         return this.projectsService.remove(id)
     }
 }
